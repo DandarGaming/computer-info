@@ -1,0 +1,5 @@
+# Compiled Java files
+*.class
+
+# Java build output
+hw-starter/out/
