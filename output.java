@@ -1,6 +1,9 @@
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
+import java.lang.ProcessBuilder;
+import java.lang.Process;
 
 public class output {
     public static void main(String[] args) {
@@ -11,84 +14,124 @@ public class output {
 
         System.out.println("============================");
         System.out.println("            CPU             ");
-        System.out.println("============================\n");
-
         System.out.println("============================");
+
+        ProcessBuilder pbCpu = new ProcessBuilder("./processor"); //build new process that runs processor
+
+        try {
+            Process process = pbCpu.start(); //launches program
+
+            Scanner scanner = new Scanner(process.getInputStream()); //reads output of processor line by line
+
+            while (scanner.hasNextLine()) {
+                System.out.println(scanner.nextLine()); //continues as long as there's another line
+            }
+
+            scanner.close(); //closes scanner
+
+            process.waitFor(); //wait for process to finish
+
+        } catch (IOException e) { //throw error if program can't start / is interrupted
+            System.out.println("Failed to run processor: " + e.getMessage());
+        } catch (InterruptedException e) {
+            System.out.println("Processor was interrupted.");
+        }
+
+        System.out.println("\n============================");
         System.out.println("           MEMORY           ");
-        System.out.println("============================\n");
-
         System.out.println("============================");
+
+        ProcessBuilder pbMem = new ProcessBuilder("./memory"); //builds process that runs memory
+
+        try {
+            Process process = pbMem.start(); //launches program
+
+            Scanner scanner = new Scanner(process.getInputStream()); //reads output line by line
+
+            while (scanner.hasNextLine()) { //continues as long as there's a next line
+                System.out.println(scanner.nextLine());
+            }
+
+            scanner.close(); //close scanner
+
+            process.waitFor(); //wait for process to finish before coninuing java instructions
+
+        } catch (IOException e) { //throw error if program can't start / is interrupted
+            System.out.println("Failed to run processor: " + e.getMessage());
+        } catch (InterruptedException e) {
+            System.out.println("Processor was interrupted.");
+        }
+
+        System.out.println("\n============================");
         System.out.println("            PCI             ");
         System.out.println("============================\n");
 
+        List<pciDevice> devices = pciCollector.collectDevices(); // puts collected pci devices in list
 
-        List<pciDevice> devices = pciCollector.collectDevices(); //puts collected pci devices in list
-
-        idLookup lookup; //id lookup - there's one in pciTest but it wasn't like a function so I just put it here and changed it to print stuff out the same way as the usb devices
+        idLookup lookup; // id lookup - there's one in pciTest but it wasn't like a function so I just
+                         // put it here and changed it to print stuff out the same way as the usb devices
         try {
-            lookup = idLookup.pci(); //try load pci.ids
-        } catch (IOException e) { //print error if pci.ids can't be loaded
+            lookup = idLookup.pci(); // try load pci.ids
+        } catch (IOException e) { // print error if pci.ids can't be loaded
             System.out.println("Could not load pci.ids: " + e.getMessage());
             System.out.println("Displaying raw IDs instead.");
             lookup = null;
         }
 
-        for (pciDevice device : devices) { //iterates through each device in list to print out info
+        for (pciDevice device : devices) { // iterates through each device in list to print out info
 
-            String vendorName = lookup == null //condition
-                    ? null //vendorName value if lookup == null
-                    : lookup.vendorName(device.getVendorId()); //vendorName value if lookup != null
+            String vendorName = lookup == null // condition
+                    ? null // vendorName value if lookup == null
+                    : lookup.vendorName(device.getVendorId()); // vendorName value if lookup != null
 
-            String deviceName = lookup == null //condition
+            String deviceName = lookup == null // condition
                     ? null // deviceName value if lookup == null
-                    : lookup.deviceName( 
-                            device.getVendorId(), //deviceName value if lookup != null
+                    : lookup.deviceName(
+                            device.getVendorId(), // deviceName value if lookup != null
                             device.getDeviceId());
 
-            String className = lookup == null //condition
-                    ? null //className value if lookup == null
+            String className = lookup == null // condition
+                    ? null // className value if lookup == null
                     : lookup.className(device.getClassCode()); // className value if lookup != null
 
-            if (vendorName == null) { //if lookup failed
+            if (vendorName == null) { // if lookup failed
                 vendorName = String.format(
-                        "Unknown vendor (0x%04x)", //prints id converted to hex
-                        device.getVendorId()); 
+                        "Unknown vendor (0x%04x)", // prints id converted to hex
+                        device.getVendorId());
             }
 
-            if (deviceName == null) { //if lookup failed
+            if (deviceName == null) { // if lookup failed
                 deviceName = String.format(
-                        "Unknown device (0x%04x)", //prints id converted to hex
+                        "Unknown device (0x%04x)", // prints id converted to hex
                         device.getDeviceId());
             }
 
-            if (className == null) { //if lookup failed
+            if (className == null) { // if lookup failed
                 className = String.format(
-                        "Unknown class (0x%06x)", //prints id converted to hex
+                        "Unknown class (0x%06x)", // prints id converted to hex
                         device.getClassCode());
             }
 
-            System.out.println("Name: " + device.getAddress()); //prints address name
+            System.out.println("Name: " + device.getAddress()); // prints address name
 
             System.out.println("Vendor ID: "
-                    + String.format("%04x", device.getVendorId())); //prints vendor id 
+                    + String.format("%04x", device.getVendorId())); // prints vendor id
 
             System.out.println("Device ID: "
-                    + String.format("%04x", device.getDeviceId())); //prints device id
+                    + String.format("%04x", device.getDeviceId())); // prints device id
 
-            System.out.println("Vendor Name: " + vendorName); //prints vendor name
+            System.out.println("Vendor Name: " + vendorName); // prints vendor name
 
-            System.out.println("Device Name: " + deviceName); //prints device name
+            System.out.println("Device Name: " + deviceName); // prints device name
 
-            System.out.println("Class: " + className); //prints class name
+            System.out.println("Class: " + className); // prints class name
 
             System.out.println();
         }
 
-
         System.out.println("============================");
         System.out.println("            USB             ");
         System.out.println("============================\n");
-
 
         ArrayList<ArrayList<String>> usbs = usbDevices.getUsbInfo();
 
