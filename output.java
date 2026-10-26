@@ -1,9 +1,6 @@
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
-import java.lang.ProcessBuilder;
-import java.lang.Process;
 
 public class output {
     public static void main(String[] args) {
@@ -14,53 +11,15 @@ public class output {
 
         System.out.println("============================");
         System.out.println("            CPU             ");
-        System.out.println("============================");
+        System.out.println("============================\n");
 
-        ProcessBuilder pbCpu = new ProcessBuilder("./processor"); //build new process that runs processor
-
-        try {
-            Process process = pbCpu.start(); //launches program
-
-            Scanner scanner = new Scanner(process.getInputStream()); //reads output of processor line by line
-
-            while (scanner.hasNextLine()) {
-                System.out.println(scanner.nextLine()); //continues as long as there's another line
-            }
-
-            scanner.close(); //closes scanner
-
-            process.waitFor(); //wait for process to finish
-
-        } catch (IOException e) { //throw error if program can't start / is interrupted
-            System.out.println("Failed to run processor: " + e.getMessage());
-        } catch (InterruptedException e) {
-            System.out.println("Processor was interrupted.");
-        }
+        processor.getCpuInfo();
 
         System.out.println("\n============================");
         System.out.println("           MEMORY           ");
-        System.out.println("============================");
+        System.out.println("============================\n");
 
-        ProcessBuilder pbMem = new ProcessBuilder("./memory"); //builds process that runs memory
-
-        try {
-            Process process = pbMem.start(); //launches program
-
-            Scanner scanner = new Scanner(process.getInputStream()); //reads output line by line
-
-            while (scanner.hasNextLine()) { //continues as long as there's a next line
-                System.out.println(scanner.nextLine());
-            }
-
-            scanner.close(); //close scanner
-
-            process.waitFor(); //wait for process to finish before coninuing java instructions
-
-        } catch (IOException e) { //throw error if program can't start / is interrupted
-            System.out.println("Failed to run processor: " + e.getMessage());
-        } catch (InterruptedException e) {
-            System.out.println("Processor was interrupted.");
-        }
+        memory.getMemInfo();
 
         System.out.println("\n============================");
         System.out.println("            PCI             ");
@@ -128,6 +87,10 @@ public class output {
 
             System.out.println();
         }
+
+        System.out.println("============================");
+        System.out.println("         PCI ANALYIS        ");
+        System.out.println("============================\n");
 
         System.out.println("============================");
         System.out.println("            USB             ");
