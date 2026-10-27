@@ -92,7 +92,9 @@ public class output {
         System.out.println("         PCI ANALYIS        ");
         System.out.println("============================\n");
 
-        System.out.println("============================");
+        pciAnalysisTest.getPciAnalysis();
+
+        System.out.println("\n============================");
         System.out.println("            USB             ");
         System.out.println("============================\n");
 
