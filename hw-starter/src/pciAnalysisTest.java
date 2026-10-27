@@ -7,7 +7,7 @@ import java.io.IOException;
  */
 public class pciAnalysisTest {
 
-    public static void main(String[] args) {
+    public static void getPciAnalyis() {
 
         // Create a list to hold our test PCI devices.
         List<pciDevice> devices = new ArrayList<>();
