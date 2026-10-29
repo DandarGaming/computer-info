@@ -1,0 +1,31 @@
+/* retro terminal look for report.html */
+
+body {
+    background-color: #0a0a0a;
+    color: #5fd97a;
+    font-family: "Courier New", Menlo, Consolas, monospace;
+    margin: 2em;
+}
+
+h1 {
+    text-transform: uppercase;
+}
+
+h2::before {
+    content: "> ";
+}
+
+table {
+    border-collapse: collapse;
+}
+
+th, td {
+    border: 1px solid #5fd97a;
+    padding: 4px 8px;
+    text-align: left;
+}
+
+th {
+    background-color: #5fd97a;
+    color: #0a0a0a;
+}

@@ -3,3 +3,6 @@
 
 # Java build output
 hw-starter/out/
+
+# HTML output
+report.html
