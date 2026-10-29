@@ -46,12 +46,39 @@ public class htmlPage {
 
         StringBuilder html = new StringBuilder();
 
-        String model = cpuInfo.getModel(); //name of the processor
-        int coreCount = cpuInfo.getCount(); //number of cores
+        //reads everything about the cpu once. this takes about a second because it measures the load.
+        processor.ProcessorData cpu = processor.getCpuInfo();
+
+        String model = cpu.getModel(); //name of the processor
+        int coreCount = cpu.getCoreCount(); //number of physical cores
+        int threadCount = cpu.getLogicalCpuCount(); //number of logical cpus the operating system sees
+        double[] usages = cpu.getCpuUsages(); //load of each logical cpu, as a percentage
 
         html.append("<h2>CPU</h2>\n");
         html.append("<p>Model: " + escape(model) + "</p>\n");
-        html.append("<p>Cores: " + coreCount + "</p>\n");
+        html.append("<p>Cores: " + countText(coreCount) + "</p>\n");
+        html.append("<p>Threads: " + countText(threadCount) + "</p>\n");
+        html.append("<p>Average load: " + percentText(cpu.getAverageUsage()) + "</p>\n");
+
+        if (usages.length == 0) { //no load data found (e.g. on a mac)
+            html.append("<p>No CPU load information found.</p>\n");
+            return html.toString();
+        }
+
+        //start the table and add the heading row
+        html.append("<table>\n");
+        html.append("<tr><th>CPU</th><th>Load</th></tr>\n");
+
+        for (int i = 0; i < usages.length; i++) { //loops for every logical cpu
+
+            //one row of the table
+            html.append("<tr>");
+            html.append("<td>CPU " + i + "</td>");
+            html.append("<td>" + percentText(usages[i]) + "</td>");
+            html.append("</tr>\n");
+        }
+
+        html.append("</table>\n"); //close the table
 
         return html.toString();
     }
@@ -62,17 +89,49 @@ public class htmlPage {
 
         StringBuilder html = new StringBuilder();
 
-        //memInfo gives us KiB. dividing by 1024 gives MiB, which is easier to read.
-        long totalMiB = memInfo.getTotal() / 1024;
-        long usedMiB = memInfo.getUsed() / 1024;
-        long availableMiB = memInfo.getAvailable() / 1024;
+        memory.MemoryData mem = memory.getMemInfo(); //all the memory values, in KiB
 
         html.append("<h2>Memory</h2>\n");
-        html.append("<p>Total: " + totalMiB + " MiB</p>\n");
-        html.append("<p>Used: " + usedMiB + " MiB</p>\n");
-        html.append("<p>Available: " + availableMiB + " MiB</p>\n");
+        html.append("<p>Total: " + mibText(mem.getTotalKiB()) + "</p>\n");
+        html.append("<p>Used: " + mibText(mem.getUsedKiB()) + "</p>\n");
+        html.append("<p>Available: " + mibText(mem.getAvailableKiB()) + "</p>\n");
+        html.append("<p>Free: " + mibText(mem.getFreeKiB()) + "</p>\n");
+        html.append("<p>Usage: " + percentText(mem.getUsagePercent()) + "</p>\n");
 
         return html.toString();
+    }
+
+
+    //turns a count into text. 0 or less means it couldn't be read, so we show "unknown".
+    public static String countText(int count) {
+
+        if (count <= 0) {
+            return "unknown";
+        }
+
+        return String.valueOf(count);
+    }
+
+
+    //turns a size in KiB into MiB text, e.g. "15745 MiB". -1 means it couldn't be read.
+    public static String mibText(long kib) {
+
+        if (kib < 0) {
+            return "unknown";
+        }
+
+        return (kib / 1024) + " MiB"; //dividing by 1024 gives MiB, which is easier to read
+    }
+
+
+    //turns a percentage into text with 2 decimal places, e.g. "38.74%". -1 means it couldn't be read.
+    public static String percentText(double percent) {
+
+        if (percent < 0) {
+            return "unknown";
+        }
+
+        return String.format("%.2f%%", percent); //%% prints a single % sign
     }
 
 

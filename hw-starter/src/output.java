@@ -13,13 +13,13 @@ public class output {
         System.out.println("            CPU             ");
         System.out.println("============================\n");
 
-        processor.getCpuInfo();
+        processor.main(null);
 
         System.out.println("\n============================");
         System.out.println("           MEMORY           ");
         System.out.println("============================\n");
 
-        memory.getMemInfo();
+        memory.main(null);
 
         System.out.println("\n============================");
         System.out.println("       MEMORY HIERARCHY       ");
