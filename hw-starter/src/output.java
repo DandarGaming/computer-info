@@ -22,6 +22,12 @@ public class output {
         memory.getMemInfo();
 
         System.out.println("\n============================");
+        System.out.println("       MEMORY HIERARCHY       ");
+        System.out.println("============================\n");
+
+        MemHierarchy.getMemHierarchy();
+
+        System.out.println("\n============================");
         System.out.println("            PCI             ");
         System.out.println("============================\n");
 

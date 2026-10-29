@@ -13,7 +13,7 @@ import java.util.stream.Stream;
  * The table and estimates are approximate: JVM warmup, CPU frequency scaling,
  * prefetching and virtualization can all affect the results.
  */
-public class cacheBenchmark
+public class MemHierarchy
 {
     // Each array element is a double, so these strides correspond to 8 through 1024 bytes.
     private static final int[] STRIDE_BYTES = {8, 16, 32, 64, 128, 256, 512, 1024};
@@ -25,7 +25,7 @@ public class cacheBenchmark
     // A volatile result makes the measured array reads observable to the JVM.
     private static volatile double resultSink;
 
-    public static void main(String[] args)
+    public static void getMemHierarchy()
     {
         double[][] times = new double[WORKING_SET_KIB.length][STRIDE_BYTES.length];
         int maxKiB = WORKING_SET_KIB[WORKING_SET_KIB.length - 1];
@@ -120,9 +120,9 @@ public class cacheBenchmark
         }
 
         if (estimate < 0) {
-            System.out.println("Estimated cache line: no clear stride plateau in the tested range.");
+            System.out.println("\nEstimated cache line: no clear stride plateau in the tested range.");
         } else {
-            System.out.println("Estimated cache-line scale: about " + estimate
+            System.out.println("\nEstimated cache-line scale: about " + estimate
                     + " B (time-per-access growth slowed after sustained increases; approximate, prefetch-sensitive).");
         }
     }
@@ -170,7 +170,7 @@ public class cacheBenchmark
             return;
         }
 
-        System.out.println("Machine-reported caches from " + cacheDirectory + ":");
+        System.out.println("\nMachine-reported caches from " + cacheDirectory + ":");
         for (Path index : indices) {
             String level = readText(index.resolve("level"));
             String type = readText(index.resolve("type"));
