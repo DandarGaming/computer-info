@@ -3,29 +3,27 @@ import java.util.List;
 import java.util.Locale;
 
 /** Reads processor information and CPU usage from Linux's /proc files. */
-public class processor {
+public class processor
+{
     private static final int MAX_CPUS = 1024; // Sets the maximum number of CPUs that can be handled.
 
-    /**
-     * Stores the total and idle CPU times read from one cpuN line in /proc/stat.
-     */
-    private static class CpuTimes {
+    /** Stores the total and idle CPU times read from one cpuN line in /proc/stat. */
+    private static class CpuTimes
+    {
         long total; // Stores the total number of CPU ticks.
-        long idle; // Stores idle ticks, including time waiting for I/O.
+        long idle;  // Stores idle ticks, including time waiting for I/O.
     }
 
     /** Reads the CPU model name from /proc/cpuinfo. */
-    private static String readModel() 
+    private static String readModel()
     {
         String model = cpuInfo.getField("model name");
         return model.isEmpty() ? "Model name unavailable" : model;
     }
 
-    /**
-     * Reads the number of CPU cores, or uses the logical CPU count if it is not
-     * listed.
-     */
-    private static int readCoreCount() {
+    /** Reads the number of CPU cores, or uses the logical CPU count if it is not listed. */
+    private static int readCoreCount()
+    {
         String value = cpuInfo.getField("cpu cores");
         try {
             int cores = Integer.parseInt(value);
@@ -38,7 +36,8 @@ public class processor {
     }
 
     /** Reads each logical CPU's time values from /proc/stat. */
-    private static List<CpuTimes> readCpuTimes() {
+    private static List<CpuTimes> readCpuTimes()
+    {
         List<CpuTimes> times = new ArrayList<>();
 
         // Reads each line from /proc/stat and keeps lines named cpu0, cpu1, and so on.
@@ -77,7 +76,8 @@ public class processor {
     }
 
     /** Calculates CPU usage from the difference between two time readings. */
-    private static double cpuUsage(CpuTimes first, CpuTimes second) {
+    private static double cpuUsage(CpuTimes first, CpuTimes second)
+    {
         long total = second.total - first.total; // Finds the total CPU time between the two readings.
         long idle = second.idle - first.idle; // Finds the idle CPU time between the two readings.
 
@@ -87,45 +87,98 @@ public class processor {
         return 100.0 * (total - idle) / total; // Returns the CPU usage as a percentage.
     }
 
-    public static void getCpuInfo() {
-        String model = readModel(); // Reads the processor model name.
-        int cores = readCoreCount(); // Reads the number of CPU cores.
+    /**
+     * Values that a website or another Java class can read without parsing console output.
+     * Usage values are percentages from 0.0 to 100.0; unavailable CPU usage is -1.0.
+     */
+    public static final class ProcessorData
+    {
+        private final String model;
+        private final int coreCount;
+        private final double[] cpuUsages;
 
-        List<CpuTimes> first = readCpuTimes(); // Reads CPU times for the first measurement.
-        if (first.isEmpty()) {
-            System.err.println("No CPU usage information found in /proc/stat");
-            System.exit(1); // Returns an error code if the CPU times could not be read.
-            return;
+        private ProcessorData(String model, int coreCount, double[] cpuUsages)
+        {
+            this.model = model;
+            this.coreCount = coreCount;
+            this.cpuUsages = cpuUsages.clone();
         }
 
-        try {
-            Thread.sleep(1000); // Waits one second so that CPU usage can be calculated.
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt(); // Restores the interrupted status of this thread.
-            System.err.println("CPU usage measurement was interrupted");
-            System.exit(1);
-            return;
+        public String getModel() { return model; }
+        public int getCoreCount() { return coreCount; }
+        public int getLogicalCpuCount() { return cpuUsages.length; }
+
+        /** Returns one logical CPU's usage, or -1.0 if its index is invalid. */
+        public double getCpuUsage(int cpuIndex)
+        {
+            return cpuIndex < 0 || cpuIndex >= cpuUsages.length ? -1.0 : cpuUsages[cpuIndex];
         }
 
-        List<CpuTimes> second = readCpuTimes(); // Reads CPU times for the second measurement.
-        System.out.println("CPU Model: " + model); // Prints the CPU model name.
-        System.out.println("CPU Cores: " + cores); // Prints the number of CPU cores.
-        System.out.println("Number of Logical CPUs: " + second.size()); // Prints the logical CPU count.
+        /** Returns a copy so callers cannot change the stored measurements. */
+        public double[] getCpuUsages() { return cpuUsages.clone(); }
 
-        int count = Math.min(first.size(), second.size()); // Uses the smaller count from both readings.
-        double totalUsage = 0.0; // Initializes the sum of CPU usage percentages to zero.
-
-        for (int i = 0; i < count; i++) { // Loops through the logical CPUs found in both readings.
-            double usage = cpuUsage(first.get(i), second.get(i)); // Calculates this CPU's usage.
-            System.out.printf(Locale.ROOT, "CPU %d Usage: %.2f%%%n", i, usage);
-            totalUsage += usage; // Adds this CPU's usage to the total usage.
-        }
-
-        if (count > 0) {
-            double averageLoad = totalUsage / count; // Calculates the average CPU usage percentage.
-            System.out.printf(Locale.ROOT, "Average CPU Usage: %.2f%%%n", averageLoad);
-        } else {
-            System.out.println("No CPU usage information found.");
+        /** Returns average logical-CPU usage, or -1.0 when usage could not be read. */
+        public double getAverageUsage()
+        {
+            if (cpuUsages.length == 0)
+                return -1.0;
+            double total = 0.0;
+            for (double usage : cpuUsages)
+                total += usage;
+            return total / cpuUsages.length;
         }
     }
+
+    /**
+     * Reads processor values and returns them for use by a website or Java caller.
+     * CPU usage is measured across a one-second interval, so this call takes about a second.
+     */
+    public static ProcessorData getCpuInfo()
+    {
+        String model = readModel();
+        int cores = readCoreCount();
+        List<CpuTimes> first = readCpuTimes();
+        if (first.isEmpty())
+            return new ProcessorData(model, cores, new double[0]);
+
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return new ProcessorData(model, cores, new double[0]);
+        }
+
+        List<CpuTimes> second = readCpuTimes();
+        int count = Math.min(first.size(), second.size());
+        double[] usages = new double[count];
+        for (int i = 0; i < count; i++)
+            usages[i] = cpuUsage(first.get(i), second.get(i));
+
+        return new ProcessorData(model, cores, usages);
+    }
+
+    /** Alias retained for callers using the more explicit method name. */
+    public static ProcessorData getProcessorInfo()
+    {
+        return getCpuInfo();
+    }
+
+    /** Command-line display; applications should call getCpuInfo() for returned data. */
+    public static void main(String[] args)
+    {
+        ProcessorData info = getCpuInfo();
+        System.out.println("CPU Model: " + info.getModel());
+        System.out.println("CPU Cores: " + info.getCoreCount());
+        System.out.println("Number of Logical CPUs: " + info.getLogicalCpuCount());
+
+        if (info.getLogicalCpuCount() == 0) {
+            System.out.println("No CPU usage information found.");
+            return;
+        }
+
+        for (int i = 0; i < info.getLogicalCpuCount(); i++)
+            System.out.printf(Locale.ROOT, "CPU %d Usage: %.2f%%%n", i, info.getCpuUsage(i));
+        System.out.printf(Locale.ROOT, "Average CPU Usage: %.2f%%%n", info.getAverageUsage());
+    }
 }
+
