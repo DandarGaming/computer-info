@@ -19,12 +19,8 @@ public class htmlPage {
         html.append("<meta charset=\"utf-8\">\n"); //so special characters in device names show up properly
         html.append("<title>Computer Info</title>\n");
 
-        //a small bit of CSS so the tables have borders and the page isn't squashed
-        html.append("<style>\n");
-        html.append("body { font-family: sans-serif; margin: 2em; }\n");
-        html.append("table { border-collapse: collapse; }\n");
-        html.append("th, td { border: 1px solid #cccccc; padding: 4px 8px; text-align: left; }\n");
-        html.append("</style>\n");
+        //the styling lives in style.css. it needs to be in the same folder as report.html.
+        html.append("<link rel=\"stylesheet\" href=\"style.css\">\n");
 
         html.append("</head>\n");
         html.append("<body>\n");
@@ -107,7 +103,7 @@ public class htmlPage {
 
         //start the table and add the heading row
         html.append("<table>\n");
-        html.append("<tr><th>Address</th><th>Vendor</th><th>Device</th></tr>\n");
+        html.append("<tr><th>Address</th><th>Vendor</th><th>Device</th><th>Type</th></tr>\n");
 
         for (int i = 0; i < sortedDevices.size(); i++) { //loops for every pci device
 
@@ -116,13 +112,16 @@ public class htmlPage {
             String address = device.getAddress();
             int vendorId = device.getVendorId();
             int deviceId = device.getDeviceId();
+            int classCode = device.getClassCode(); //what kind of device it is, e.g. graphics or usb controller
 
             String vendorName = null;
             String deviceName = null;
+            String typeName = null;
 
             if (lookup != null) { //only look up names if pci.ids loaded
                 vendorName = lookup.vendorName(vendorId);
                 deviceName = lookup.deviceName(vendorId, deviceId);
+                typeName = lookup.className(classCode);
             }
 
             if (vendorName == null) { //if lookup failed, show the id in hex instead
@@ -133,11 +132,16 @@ public class htmlPage {
                 deviceName = String.format("Unknown device (0x%04x)", deviceId);
             }
 
+            if (typeName == null) { //if lookup failed, show the class code in hex instead
+                typeName = String.format("Unknown class (0x%06x)", classCode);
+            }
+
             //one row of the table. <tr> is a row, <td> is a cell in that row.
             html.append("<tr>");
             html.append("<td>" + escape(address) + "</td>");
             html.append("<td>" + escape(vendorName) + "</td>");
             html.append("<td>" + escape(deviceName) + "</td>");
+            html.append("<td>" + escape(typeName) + "</td>");
             html.append("</tr>\n");
         }
 
