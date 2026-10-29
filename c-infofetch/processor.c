@@ -2,8 +2,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-
-#define MAX_CPUS 1024 //defines that the max number of CPUs that can be handled is 1024
+//defines that the max number of CPUs that can be handled is 1024
+#define MAX_CPUS 1024
 
 struct CpuInfo { //struct to store CPU information
     char model[256]; //model variable to store the CPU model name with a maximum length of 256 characters
